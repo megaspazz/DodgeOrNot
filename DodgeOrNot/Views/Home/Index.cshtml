@@ -29,3 +29,102 @@
         <p><a class="btn btn-default" href="http://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
     </div>
 </div>
+
+<div>
+	<h2>Chat</h2>
+	<textarea id="txtChat" cols="64" rows="8" wrap="off" style="overflow: scroll"></textarea><br />
+	<button id="btnSubmitChat" type="button">Submit Chat</button>
+</div>
+<div>
+	<h2>Players</h2>
+	Player 1: <input id="txtP1" /><br />
+	Player 2: <input id="txtP2" /><br />
+	Player 3: <input id="txtP3" /><br />
+	Player 4: <input id="txtP4" /><br />
+	Player 5: <input id="txtP5" /><br />
+	<button id="btnSubmit" type="button">Submit</button>
+	<button id="btnClear" type="button">Clear</button>
+</div>
+
+<script>
+	$("#btnSubmitChat").click(function ()
+	{
+		var playerBoxes = getPlayerBoxes();
+		for (var i = 0; i < playerBoxes.length; i++)
+		{
+			playerBoxes[i].value = "";
+		}
+
+		var chat = document.getElementById("txtChat").value;
+		var lines = chat.split("\n");
+		var players = {};
+		for (var i = 0; i < lines.length; i++)
+		{
+			var idxColon = lines[i].indexOf(": ");
+			var idxJoin = lines[i].indexOf(" has joined the room");
+			if (idxColon >= 0)
+			{
+				var p = lines[i].substring(0, idxColon);
+				players[p] = true;
+			} else if (idxJoin >= 0)
+			{
+				var p = lines[i].substring(0, idxJoin);
+				players[p] = true;
+			}
+		}
+
+		var idx = 0;
+		for (var p in players)
+		{
+			if (idx >= 5)
+			{
+				break;
+			}
+			playerBoxes[idx++].value = p;
+		}
+	});
+
+	$("#btnSubmit").click(function ()
+	{
+		var playerBoxes = getPlayerBoxes();
+		var names = playerBoxes.map(function (txtBox)
+		{
+			return txtBox.value;
+		}).filter(function (txt)
+		{
+			return txt;
+		}).join();
+
+		var url = "/Summoner/GetInfo/";
+		var args = {
+			region: "na",
+			summonerNames: names
+		};
+
+		$.getJSON(url, args, function (data)
+		{
+			// TODO: actually do something with the returned data
+			alert(JSON.stringify(data));
+		});
+	});
+
+	$("#btnClear").click(function ()
+	{
+		var playerBoxes = getPlayerBoxes();
+		for (var i = 0; i < playerBoxes.length; i++)
+		{
+			playerBoxes[i].value = "";
+		}
+	});
+
+	function getPlayerBoxes()
+	{
+		return [
+			document.getElementById("txtP1"),
+			document.getElementById("txtP2"),
+			document.getElementById("txtP3"),
+			document.getElementById("txtP4"),
+			document.getElementById("txtP5")
+		];
+	}
+</script>

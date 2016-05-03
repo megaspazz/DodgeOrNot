@@ -19,6 +19,11 @@ namespace DodgeOrNot.Controllers
             return View();
         }
 
+		public string Test()
+		{
+			return "sample text lorem ipsum whatever";
+		}
+
 		public string GetInfo(string region, string summonerNames)
 		{
 			string[] names = summonerNames.Split(',');
