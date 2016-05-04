@@ -147,22 +147,21 @@
 				var tdPart = document.createElement("td");
 				var tdWin = document.createElement("td");
 
-				var avg = averageResults(data);
-				var kda = (avg.kills + avg.assists) / avg.deaths;
+				var res = computeResults(data);
                 
 				tdName.innerHTML = summResults[index].name;
 
-				tdKDA.appendChild(createIcon(kda, 1.5, 4.0));
-				tdKDA.appendChild(createIcon(kda, 2.0, 3.0));
-				tdKDA.appendChild(createSpan(avg.kills.toFixed(1) + " / " + avg.deaths.toFixed(1) + " / " + avg.assists.toFixed(1) + " (" + kda.toFixed(2) + ")"));
+				tdKDA.appendChild(createIcon(res.kda, 1.5, 4.0));
+				tdKDA.appendChild(createIcon(res.kda, 2.0, 3.0));
+				tdKDA.appendChild(createSpan(res.average.kills.toFixed(1) + " / " + res.average.deaths.toFixed(1) + " / " + res.average.assists.toFixed(1) + " (" + res.kda.toFixed(2) + ")"));
 
-				tdPart.appendChild(createIcon(avg.participation, 0.40, 0.60));
-				tdPart.appendChild(createIcon(avg.participation, 0.45, 0.55));
-				tdPart.appendChild(createSpan((100 * avg.participation).toFixed(2) + "%"));
+				tdPart.appendChild(createIcon(res.average.participation, 0.40, 0.60));
+				tdPart.appendChild(createIcon(res.average.participation, 0.45, 0.55));
+				tdPart.appendChild(createSpan((100 * res.average.participation).toFixed(2) + "%"));
 
-				tdWin.appendChild(createIcon(avg.winRate, 0.30, 0.70));
-				tdWin.appendChild(createIcon(avg.winRate, 0.40, 0.60));
-				tdWin.appendChild(createSpan((100 * avg.winRate).toFixed(2) + "%"));
+				tdWin.appendChild(createIcon(res.winRate, 0.30, 0.70));
+				tdWin.appendChild(createIcon(res.winRate, 0.40, 0.60));
+				tdWin.appendChild(createSpan((100 * res.winRate).toFixed(2) + "%"));
 
 				tr.appendChild(tdName);
 				tr.appendChild(tdKDA);
@@ -201,7 +200,7 @@
 		];
 	}
 
-	function averageResults(results) {
+	function computeResults(results) {
 	    var games = results.length;
 	    var totalKills = 0;
 	    var totalDeaths = 0;
@@ -217,11 +216,20 @@
 	        totalVictories += res.Victory;
 	    }
 	    return {
-	        kills: totalKills / games,
-	        deaths: totalDeaths / games,
-	        assists: totalAssists / games,
-	        participation: totalParticipation / games,
-            winRate: totalVictories / games
+            kda: (totalKills + totalAssists) / totalDeaths,
+	        winRate: totalVictories / games,
+	        total: {
+	            kills: totalKills,
+	            deaths: totalDeaths,
+	            assists: totalAssists,
+	            wins: totalVictories,
+	        },
+	        average: {
+	            kills: totalKills / games,
+	            deaths: totalDeaths / games,
+	            assists: totalAssists / games,
+	            participation: totalParticipation / games
+	        }
 	    };
 	}
 

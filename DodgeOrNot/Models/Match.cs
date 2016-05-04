@@ -36,14 +36,17 @@ namespace DodgeOrNot.Models
             {
                 string matchFragURL = GetMatchFragURL(region, matchID, false);
                 string json = Global.CallAPI(matchFragURL);
-                m = new Match()
+                if (!string.IsNullOrWhiteSpace(json))
                 {
-                    Region = region.ToLowerInvariant(),
-                    MatchID = matchID,
-                    RawJSON = json
-                };
-                db.Matches.Add(m);
-                db.SaveChanges();
+                    m = new Match()
+                    {
+                        Region = region.ToLowerInvariant(),
+                        MatchID = matchID,
+                        RawJSON = json
+                    };
+                    db.Matches.Add(m);
+                    db.SaveChanges();
+                }
             }
             return m;
         }
@@ -58,7 +61,10 @@ namespace DodgeOrNot.Models
             {
                 long matchID = matchObj["matchId"].ToObject<long>();
                 Match m = GetMatch(region, matchID);
-                matches.Add(m);
+                if (m != null)
+                {
+                    matches.Add(m);
+                }
             }
             return matches.ToArray();
         }

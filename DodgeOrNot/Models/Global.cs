@@ -10,50 +10,90 @@ namespace DodgeOrNot.Models
     public static class Global
     {
         public static Random RNG = new Random();
-        
-        public static readonly APIKeyCounter[] API_KEYS = new APIKey [] {
-            // Paste all your keys here!  The app will not work without at least one key!
-        }.Select(x => new APIKeyCounter(x)).ToArray();
-        
+
+        public static readonly APIKey[] API_KEYS = {
+            new APIKey("186f8fec-2a95-407b-ac01-13d1e060796b", 10, 10),    // BE GOOD TO ME (NA)
+            new APIKey("206eb44e-a927-4132-8586-42b50842f9c0", 10, 10),    // Lt is L (NA)
+            new APIKey("42366f1f-f941-4121-b586-b635e695a42e", 10, 10),    // iLoveSchoolgirls (NA)
+            new APIKey("5897411f-2bfb-4f22-a36b-e85f9e0f5003", 10, 10),    // Katherine Zhao (NA)
+            new APIKey("43c95ae1-918b-41b7-8c7e-8be545bc7ac9", 10, 10),    // Celestial Beauty (EUW)
+            new APIKey("e7335df9-be3b-4179-a9ed-00ebc1871a68", 10, 10),    // LOCA PEOPLE (LAN)
+            new APIKey("4ff85aed-001e-43a8-9dbe-42c3cb1f1598", 10, 10),    // DonaId J Trump (LAN)
+        };
+
+        private static readonly object _API_LOCK = new object();
+        private static SortedSet<APIKeyUse> _API_KEY_PQ;
         static Global()
         {
-            Shuffle(API_KEYS);
+            List<APIKeyUse> lst = new List<APIKeyUse>();
+            foreach (APIKey key in API_KEYS)
+            {
+                for (int i = 0; i < key.MaxUses; i++)
+                {
+                    lst.Add(new APIKeyUse()
+                    {
+                        Key = key,
+                        NextUse = DateTime.UtcNow
+                    });
+                }
+            }
+            APIKeyUse[] arr = lst.ToArray();
+            Shuffle(arr);
+            for (int i = 0; i < arr.Length; i++)
+            {
+                arr[i].KeyID = i;
+            }
+            _API_KEY_PQ = new SortedSet<APIKeyUse>(arr);
         }
-
-        private static int _API_IDX = 0;
-        public static APIKeyCounter CurrentKeyCounter
+        
+        public static APIKeyUse CurrentKeyUse
         {
             get
             {
-                return API_KEYS[_API_IDX];
+                lock (_API_LOCK)
+                {
+                    return _API_KEY_PQ.First();
+                }
             }
         }
 
-        public static string UseCurrentKey()
+        public static APIKeyUse WaitCurrentKey()
         {
-            APIKeyCounter curr = Global.CurrentKeyCounter;
-            curr.Uses++;
-            if (curr.Uses >= curr.Key.MaxUses)
+            APIKeyUse curr = Global.CurrentKeyUse;
+            TimeSpan dt = curr.NextUse - DateTime.UtcNow;
+            if (dt.Ticks > 0)
             {
-                RecycleCurrentKey();
+                Thread.Sleep(dt);
             }
-            return curr.Key.KeyString;
+            return curr;
         }
 
+        private static readonly double _RATE_LIMIT_WAIT_SECS = 5;
         public static string CallAPI(string urlFrag)
         {
             using (WebClient wc = new WebClient())
             {
                 while (true)
                 {
+                    APIKeyUse curr = WaitCurrentKey();
+                    string url = urlFrag + curr.Key.KeyString;
                     try
                     {
-                        var url = urlFrag + UseCurrentKey();
-                        return wc.DownloadString(url);
+                        string response = wc.DownloadString(url);
+                        CycleCurrentKey(curr, curr.Key.Cooldown);
+                        return response;
                     }
-                    catch
+                    catch (WebException ex)
                     {
-                        RecycleCurrentKey();
+                        HttpStatusCode statusCode = ((HttpWebResponse)ex.Response).StatusCode;
+                        if ((int)statusCode == 429)
+                        {
+                            CycleCurrentKey(curr, _RATE_LIMIT_WAIT_SECS);
+                        }
+                        else
+                        {
+                            return null;
+                        }
                     }
                 }
             }
@@ -76,10 +116,19 @@ namespace DodgeOrNot.Models
             }
         }
 
-        private static void RecycleCurrentKey()
+        private static void CycleCurrentKey(APIKeyUse curr, double seconds)
         {
-            API_KEYS[_API_IDX].Uses = 0;
-            _API_IDX = (_API_IDX + 1) % API_KEYS.Length;
+            lock (_API_LOCK)
+            {
+                _API_KEY_PQ.Remove(curr);
+                curr.NextUse = DateTime.UtcNow.AddSeconds(seconds);
+                _API_KEY_PQ.Add(curr);
+            }
+        }
+
+        private static void CycleCurrentKey(double seconds)
+        {
+            CycleCurrentKey(Global.CurrentKeyUse, seconds);
         }
     }
 
@@ -97,29 +146,46 @@ namespace DodgeOrNot.Models
         }
     }
 
-    public class APIKeyCounter
+    //public class APIKeyCounter
+    //{
+    //    public APIKey Key { get; set; }
+    //    public int Uses { get; set; }
+
+    //    public APIKeyCounter(APIKey key)
+    //    {
+    //        this.Key = key;
+    //    }
+    //}
+
+    //public class APIKeyCountdown
+    //{
+    //    public APIKey Key { get; set; }
+    //    public DateTime RechargeTime { get; set; }
+
+    //    public static APIKeyCountdown StartRecharge(APIKey key)
+    //    {
+    //        return new APIKeyCountdown()
+    //        {
+    //            Key = key,
+    //            RechargeTime = DateTime.UtcNow.Add(new TimeSpan(0, 0, key.Cooldown))
+    //        };
+    //    }
+    //}
+
+    public class APIKeyUse : IComparable<APIKeyUse>
     {
+        public int KeyID { get; set; }
         public APIKey Key { get; set; }
-        public int Uses { get; set; }
+        public DateTime NextUse { get; set; }
 
-        public APIKeyCounter(APIKey key)
+        public int CompareTo(APIKeyUse other)
         {
-            this.Key = key;
-        }
-    }
-
-    public class APIKeyCountdown
-    {
-        public APIKey Key { get; set; }
-        public DateTime RechargeTime { get; set; }
-
-        public static APIKeyCountdown StartRecharge(APIKey key)
-        {
-            return new APIKeyCountdown()
+            int dlu = this.NextUse.CompareTo(other.NextUse);
+            if (dlu != 0)
             {
-                Key = key,
-                RechargeTime = DateTime.UtcNow.Add(new TimeSpan(0, 0, key.Cooldown))
-            };
+                return dlu;
+            }
+            return this.KeyID.CompareTo(other.KeyID);
         }
     }
 }
