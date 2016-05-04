@@ -19,9 +19,9 @@ namespace DodgeOrNot.Controllers
         }
 
         // GET: Match/Test
-        public string Test()
+		public string Test(string region, long summonerID, string matchType, int beginIndex, int? endIndex)
         {
-            return "this is THE match C0ntr0ll3r!!11!!";
+            return "this is THE match C0ntr0ll3r!!11!! ";
         }
 
         public string GetHistory(string region, long summonerID, string matchType, int beginIndex, int endIndex)

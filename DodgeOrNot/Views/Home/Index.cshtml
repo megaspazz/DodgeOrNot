@@ -36,6 +36,19 @@
 	<button id="btnSubmitChat" type="button">Submit Chat</button>
 </div>
 <div>
+	<h2>Info</h2>
+	<div>
+		Region:
+		<select id="selRegion">
+			<option value="na">NA</option>
+			<option value="euw">EUW</option>
+			<option value="lan">LAN</option>
+			<option value="oce">OCE</option>
+		</select>
+	</div>
+	Recent Games: <input id="numGames" type="number" min="1" value="20" />
+</div>
+<div>
 	<h2>Players</h2>
 	Player 1: <input id="txtP1" /><br />
 	Player 2: <input id="txtP2" /><br />
@@ -45,6 +58,14 @@
 	<button id="btnSubmit" type="button">Submit</button>
 	<button id="btnClear" type="button">Clear</button>
 </div>
+<table id="tblResults">
+	<tr>
+		<th>Summoner</th>
+		<th>KDA</th>
+		<th>Participation</th>
+		<th>Win Rate</th>
+	</tr>
+</table>
 
 <script>
 	$("#btnSubmitChat").click(function ()
@@ -105,8 +126,48 @@
 		{
 			// TODO: actually do something with the returned data
 			alert(JSON.stringify(data));
+			var summResults = [];
+			for (var i = 0; i < data.length; i++)
+			{
+				var jsObj = JSON.parse(data[i].RawJSON);
+				summResults[i] = {
+					id: jsObj.id,
+					name: jsObj.name
+				};
+			}
+			loadMatchData(summResults);
 		});
 	});
+
+	function loadMatchData(summResults)
+	{
+		var url = "/Match/GetResults";
+		var reg = $("#selRegion").val();
+		var games = $("#numGames").val();
+
+		for (var i = 0; i < summResults.length; i++)
+		{
+			var args = {
+				region: reg,
+				summonerID: summResults[i].id,
+				matchType: "TEAM_BUILDER_DRAFT_RANKED_5x5",
+				beginIndex: 0,
+				endIndex: games
+			};
+
+			$.getJSON(url, args, function (data)
+			{
+				alert(JSON.stringify(data));
+				//var tr = document.createElement("tr");
+				//var tdName = document.createElement("td");
+				//var tdKDA = document.createElement("td");
+				//var tdPart = document.createElement("td");
+				//var tdWin = document.createElement("td");
+
+				//tdName.innerHTML = summResults[i].name;
+			});
+		}
+	}
 
 	$("#btnClear").click(function ()
 	{

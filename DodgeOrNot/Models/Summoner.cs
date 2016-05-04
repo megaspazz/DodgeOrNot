@@ -20,6 +20,15 @@ namespace DodgeOrNot.Models
 		[Key, Column(Order = 1)]
 		public string SummonerName { get; set; }
 
+		//public long SummonerID
+		//{
+		//	get
+		//	{
+		//		JObject jsObj = JObject.Parse(this.RawJSON);
+		//		return jsObj[this.SummonerName]["id"].ToObject<long>();
+		//	}
+		//}
+
 		public static Summoner[] FromRegionAndNames(string region, params string[] names)
 		{
             //DodgeOrNotContext db = new DodgeOrNotContext();

@@ -31,6 +31,12 @@ namespace DodgeOrNot.Models
         public static Match GetMatch(string region, long matchID)
         {
             DodgeOrNotContext db = new DodgeOrNotContext();
+			var x = db.Matches.ToArray();
+			//foreach (var t in x)
+			//{
+			//	db.Matches.Remove(t);
+			//}
+			//db.SaveChanges();
             Match m = db.Matches.Find(region, matchID);
             if (m == null)
             {
@@ -77,7 +83,8 @@ namespace DodgeOrNot.Models
     {
         public long Kills { get; set; }
         public long Deaths { get; set; }
-        public long Assists { get; set; }
+		public long Assists { get; set; }
+		public double Participation { get; set; }
         public bool Victory { get; set; }
 
         public static MatchResult FromMatch(Match match, long summonerID)
@@ -95,22 +102,29 @@ namespace DodgeOrNot.Models
             if (partID == 0)
             {
                 return null;
-            }
+			}
+			MatchResult mr = new MatchResult();
+			int teamID = 0;
+			Dictionary<int, long> teamKills = new Dictionary<int, long>();
             foreach (var partObj in jsObj["participants"])
-            {
+			{
+				int currTeam = partObj["teamId"].ToObject<int>();
+				var statsObj = partObj["stats"];
+				long playerKills = statsObj["kills"].ToObject<long>();
+				long prev;
+				teamKills.TryGetValue(currTeam, out prev);
+				teamKills[currTeam] = prev + playerKills;
                 if (partObj["participantId"].ToObject<int>() == partID)
-                {
-                    var statsObj = partObj["stats"];
-                    return new MatchResult()
-                    {
-                        Kills = statsObj["kills"].ToObject<long>(),
-                        Deaths = statsObj["deaths"].ToObject<long>(),
-                        Assists = statsObj["assists"].ToObject<long>(),
-                        Victory = statsObj["winner"].ToObject<bool>()
-                    };
+				{
+					teamID = currTeam;
+                    mr.Kills = playerKills;
+					mr.Deaths = statsObj["deaths"].ToObject<long>();
+                    mr.Assists = statsObj["assists"].ToObject<long>();
+                    mr.Victory = statsObj["winner"].ToObject<bool>();
                 }
             }
-            throw new Exception("Malformed JSON.  Missing participant ID from participant stats.");
+			mr.Participation = (double)(mr.Kills + mr.Assists) / teamKills[teamID];
+			return mr;
         }
 
         public static MatchResult[] GetMatchResultsFor(string region, long summonerID, string matchType, int beginIndex, int endIndex)
@@ -119,4 +133,14 @@ namespace DodgeOrNot.Models
             return matches.Select(x => MatchResult.FromMatch(x, summonerID)).ToArray();
         }
     }
+
+	//public class MatchHistory
+	//{
+	//	public MatchResult[] Matches { get; set; }
+
+	//	public static MatchHistory FromSummonerID(string region, long summonerID, int recentGames)
+	//	{
+	//		GetMatchResultsFor(string region, long summonerID, string matchType)
+	//	}
+	//}
 }
