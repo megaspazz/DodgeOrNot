@@ -38,6 +38,15 @@ namespace DodgeOrNot.Models
             //	return summ;
             //}
 
+            if (names == null)
+            {
+                return null;
+            }
+            if (names.Length == 0 || string.IsNullOrEmpty(names[0]))
+            {
+                return new Summoner[0];
+            }
+
             WebClient wc = new WebClient();
             IEnumerable<string> safeNames = names.Select(x => FixName(x));
 			string inputNames = string.Join(",", safeNames);

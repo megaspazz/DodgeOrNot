@@ -2,38 +2,10 @@
     ViewBag.Title = "Home Page";
 }
 
-<div class="jumbotron">
-    <h1>ASP.NET</h1>
-    <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS and JavaScript.</p>
-    <p><a href="http://asp.net" class="btn btn-primary btn-lg">Learn more &raquo;</a></p>
-</div>
-
-<div class="row">
-    <div class="col-md-4">
-        <h2>Getting started</h2>
-        <p>
-            ASP.NET MVC gives you a powerful, patterns-based way to build dynamic websites that
-            enables a clean separation of concerns and gives you full control over markup
-            for enjoyable, agile development.
-        </p>
-        <p><a class="btn btn-default" href="http://go.microsoft.com/fwlink/?LinkId=301865">Learn more &raquo;</a></p>
-    </div>
-    <div class="col-md-4">
-        <h2>Get more libraries</h2>
-        <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
-        <p><a class="btn btn-default" href="http://go.microsoft.com/fwlink/?LinkId=301866">Learn more &raquo;</a></p>
-    </div>
-    <div class="col-md-4">
-        <h2>Web Hosting</h2>
-        <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
-        <p><a class="btn btn-default" href="http://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
-    </div>
-</div>
-
 <div>
 	<h2>Chat</h2>
 	<textarea id="txtChat" cols="64" rows="8" wrap="off" style="overflow: scroll"></textarea><br />
-	<button id="btnSubmitChat" type="button">Submit Chat</button>
+	<button id="btnParseChat" type="button">Parse Chat</button>
 </div>
 <div>
 	<h2>Info</h2>
@@ -58,17 +30,26 @@
 	<button id="btnSubmit" type="button">Submit</button>
 	<button id="btnClear" type="button">Clear</button>
 </div>
-<table id="tblResults">
-	<tr>
-		<th>Summoner</th>
-		<th>KDA</th>
-		<th>Participation</th>
-		<th>Win Rate</th>
-	</tr>
-</table>
+<div>
+    <h2>Results</h2>
+    <table id="tblResults">
+        <colgroup>
+            <col width="160" />
+            <col width="240" />
+            <col width="160" />
+            <col width="160" />
+        </colgroup>
+        <tr>
+            <th>Summoner</th>
+            <th>KDA Ratio</th>
+            <th>Participation</th>
+            <th>Win Rate</th>
+        </tr>
+    </table>
+</div>
 
 <script>
-	$("#btnSubmitChat").click(function ()
+	$("#btnParseChat").click(function ()
 	{
 		var playerBoxes = getPlayerBoxes();
 		for (var i = 0; i < playerBoxes.length; i++)
@@ -124,8 +105,6 @@
 
 		$.getJSON(url, args, function (data)
 		{
-			// TODO: actually do something with the returned data
-			alert(JSON.stringify(data));
 			var summResults = [];
 			for (var i = 0; i < data.length; i++)
 			{
@@ -145,6 +124,9 @@
 		var reg = $("#selRegion").val();
 		var games = $("#numGames").val();
 
+        // Remove all rows in the results table except the first header row
+		$("#tblResults").find("tr:gt(0)").remove();
+
 		for (var i = 0; i < summResults.length; i++)
 		{
 			var args = {
@@ -155,18 +137,48 @@
 				endIndex: games
 			};
 
-			$.getJSON(url, args, function (data)
+            // Need to create a closure to preserve the value of the iterator in the callback
+			$.getJSON(url, args, createLoopCallback(i, function (data, index)
 			{
-				alert(JSON.stringify(data));
-				//var tr = document.createElement("tr");
-				//var tdName = document.createElement("td");
-				//var tdKDA = document.createElement("td");
-				//var tdPart = document.createElement("td");
-				//var tdWin = document.createElement("td");
+			    var tblResults = document.getElementById("tblResults");
+			    var tr = document.createElement("tr");
+				var tdName = document.createElement("td");
+				var tdKDA = document.createElement("td");
+				var tdPart = document.createElement("td");
+				var tdWin = document.createElement("td");
 
-				//tdName.innerHTML = summResults[i].name;
-			});
+				var avg = averageResults(data);
+				var kda = (avg.kills + avg.assists) / avg.deaths;
+                
+				tdName.innerHTML = summResults[index].name;
+
+				tdKDA.appendChild(createIcon(kda, 1.5, 4.0));
+				tdKDA.appendChild(createIcon(kda, 2.0, 3.0));
+				tdKDA.appendChild(createSpan(avg.kills.toFixed(1) + " / " + avg.deaths.toFixed(1) + " / " + avg.assists.toFixed(1) + " (" + kda.toFixed(2) + ")"));
+
+				tdPart.appendChild(createIcon(avg.participation, 0.40, 0.60));
+				tdPart.appendChild(createIcon(avg.participation, 0.45, 0.55));
+				tdPart.appendChild(createSpan((100 * avg.participation).toFixed(2) + "%"));
+
+				tdWin.appendChild(createIcon(avg.winRate, 0.30, 0.70));
+				tdWin.appendChild(createIcon(avg.winRate, 0.40, 0.60));
+				tdWin.appendChild(createSpan((100 * avg.winRate).toFixed(2) + "%"));
+
+				tr.appendChild(tdName);
+				tr.appendChild(tdKDA);
+				tr.appendChild(tdPart);
+				tr.appendChild(tdWin);
+				tblResults.appendChild(tr);
+			}));
 		}
+	}
+
+	function createLoopCallback(index, func)
+	{
+	    return function (data)
+	    {
+	        func(data, index);
+	    }
 	}
 
 	$("#btnClear").click(function ()
@@ -187,5 +199,55 @@
 			document.getElementById("txtP4"),
 			document.getElementById("txtP5")
 		];
+	}
+
+	function averageResults(results) {
+	    var games = results.length;
+	    var totalKills = 0;
+	    var totalDeaths = 0;
+	    var totalAssists = 0;
+	    var totalParticipation = 0;
+	    var totalVictories = 0;
+	    for (var i = 0; i < results.length; i++) {
+	        var res = results[i];
+	        totalKills += res.Kills;
+	        totalDeaths += res.Deaths;
+	        totalAssists += res.Assists;
+	        totalParticipation += res.Participation;
+	        totalVictories += res.Victory;
+	    }
+	    return {
+	        kills: totalKills / games,
+	        deaths: totalDeaths / games,
+	        assists: totalAssists / games,
+	        participation: totalParticipation / games,
+            winRate: totalVictories / games
+	    };
+	}
+
+	function createIcon(val, lo, hi)
+	{
+	    var src = "/Images/neutral.png";
+	    if (val <= lo)
+	    {
+	        src = "/Images/bad.png";
+	    }
+	    if (val >= hi)
+	    {
+	        src = "/Images/good.png";
+	    }
+	    var img = document.createElement("img");
+	    img.setAttribute("src", src);
+	    //img.setAttribute("width", 32);
+	    //img.setAttribute("height", 32);
+	    img.setAttribute("class", "icon-pic");
+	    return img;
+	}
+
+	function createSpan(txt)
+    {
+	    var span = document.createElement("span");
+	    span.innerHTML = txt;
+	    return span;
 	}
 </script>

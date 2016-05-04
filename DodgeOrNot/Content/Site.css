@@ -20,5 +20,13 @@
 input,
 select,
 textarea {
-    max-width: 280px;
+    max-width: 640px;
+}
+
+/* Formatting the results display table */
+
+.icon-pic {
+    margin: 4px 4px 4px 0px;
+    width: 32px;
+    height: 32px;
 }

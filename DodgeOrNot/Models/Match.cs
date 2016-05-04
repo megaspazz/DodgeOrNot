@@ -128,13 +128,14 @@ namespace DodgeOrNot.Models
         }
     }
 
-	//public class MatchHistory
-	//{
-	//	public MatchResult[] Matches { get; set; }
+    //public class MatchHistory
+    //{
+    //    public Summoner SummonerInfo { get; set; }
+    //    public MatchResult[] Matches { get; set; }
 
-	//	public static MatchHistory FromSummonerID(string region, long summonerID, int recentGames)
-	//	{
-	//		GetMatchResultsFor(string region, long summonerID, string matchType)
-	//	}
-	//}
+    //    public static MatchHistory FromSummonerID(string region, long summonerID, int recentGames)
+    //    {
+    //        return new MatchHistory
+    //    }
+    //}
 }
