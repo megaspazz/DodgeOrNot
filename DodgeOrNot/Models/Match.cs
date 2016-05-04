@@ -18,14 +18,14 @@ namespace DodgeOrNot.Models
         [Key, Column(Order = 1)]
         public long MatchID { get; set; }
 
-        public static string GetMatchReferenceURL(string region, long summonerID, string matchType, int beginIndex, int endIndex)
+        public static string GetMatchReferenceFragURL(string region, long summonerID, string matchType, int beginIndex, int endIndex)
         {
-            return string.Format("https://{0}.api.pvp.net/api/lol/{0}/v2.2/matchlist/by-summoner/{1}?rankedQueues={2}&beginIndex={3}&endIndex={4}&api_key={5}", region, summonerID, matchType, beginIndex, endIndex, Global.API_KEY);
+            return string.Format("https://{0}.api.pvp.net/api/lol/{0}/v2.2/matchlist/by-summoner/{1}?rankedQueues={2}&beginIndex={3}&endIndex={4}&api_key=", region, summonerID, matchType, beginIndex, endIndex);
         }
 
-        public static string GetMatchURL(string region, long matchID, bool includeTimeline)
+        public static string GetMatchFragURL(string region, long matchID, bool includeTimeline)
         {
-            return string.Format("https://{0}.api.pvp.net/api/lol/{0}/v2.2/match/{1}?includeTimeline={2}&api_key={3}", region, matchID, includeTimeline, Global.API_KEY);
+            return string.Format("https://{0}.api.pvp.net/api/lol/{0}/v2.2/match/{1}?includeTimeline={2}&api_key=", region, matchID, includeTimeline);
         }
 
         public static Match GetMatch(string region, long matchID)
@@ -34,9 +34,8 @@ namespace DodgeOrNot.Models
             Match m = db.Matches.Find(region, matchID);
             if (m == null)
             {
-                WebClient wc = new WebClient();
-                string matchURL = GetMatchURL(region, matchID, false);
-                string json = wc.DownloadString(matchURL);
+                string matchFragURL = GetMatchFragURL(region, matchID, false);
+                string json = Global.CallAPI(matchFragURL);
                 m = new Match()
                 {
                     Region = region.ToLowerInvariant(),
@@ -51,9 +50,8 @@ namespace DodgeOrNot.Models
 
         public static Match[] GetMatchesFor(string region, long summonerID, string matchType, int beginIndex, int endIndex)
         {
-            WebClient wc = new WebClient();
-            string matchRefURL = GetMatchReferenceURL(region, summonerID, matchType, beginIndex, endIndex);
-            string json = wc.DownloadString(matchRefURL);
+            string matchRefFragURL = GetMatchReferenceFragURL(region, summonerID, matchType, beginIndex, endIndex);
+            string json = Global.CallAPI(matchRefFragURL);
             JObject jsObj = JObject.Parse(json);
             List<Match> matches = new List<Match>();
             foreach (var matchObj in jsObj["matches"])

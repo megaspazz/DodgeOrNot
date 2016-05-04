@@ -20,16 +20,28 @@ namespace DodgeOrNot.Models
 		[Key, Column(Order = 1)]
 		public string SummonerName { get; set; }
 
-		//public long SummonerID
-		//{
-		//	get
-		//	{
-		//		JObject jsObj = JObject.Parse(this.RawJSON);
-		//		return jsObj[this.SummonerName]["id"].ToObject<long>();
-		//	}
-		//}
+        //public long SummonerID
+        //{
+        //	get
+        //	{
+        //		JObject jsObj = JObject.Parse(this.RawJSON);
+        //		return jsObj[this.SummonerName]["id"].ToObject<long>();
+        //	}
+        //}
 
-		public static Summoner[] FromRegionAndNames(string region, params string[] names)
+        public static string FixName(string name)
+        {
+            return Regex.Replace(name, @"[^\w]", "").ToLowerInvariant();
+        }
+
+        public static string GetSummonerFragURL(string region, params string[] names)
+        {
+            IEnumerable<string> safeNames = names.Select(x => FixName(x));
+            string inputNames = string.Join(",", safeNames);
+            return string.Format("https://{0}.api.pvp.net/api/lol/{0}/v1.4/summoner/by-name/{1}?api_key=", region, inputNames);
+        }
+
+        public static Summoner[] FromRegionAndNames(string region, params string[] names)
 		{
             //DodgeOrNotContext db = new DodgeOrNotContext();
             //Summoner summ = db.Summoners.Find(name);
@@ -46,12 +58,11 @@ namespace DodgeOrNot.Models
             {
                 return new Summoner[0];
             }
-
-            WebClient wc = new WebClient();
+            
             IEnumerable<string> safeNames = names.Select(x => FixName(x));
 			string inputNames = string.Join(",", safeNames);
-			string summURL = GetSummonerURL(region, names);
-			string json = wc.DownloadString(summURL);
+			string summFragURL = GetSummonerFragURL(region, names);
+			string json = Global.CallAPI(summFragURL);
 			JObject jsObj = JObject.Parse(json);
 
 			List<Summoner> summs = new List<Summoner>();
@@ -63,18 +74,6 @@ namespace DodgeOrNot.Models
 				});
 			}
 			return summs.ToArray();
-		}
-        
-		public static string FixName(string name)
-		{
-			return Regex.Replace(name, @"[^\w]", "").ToLowerInvariant();
-		}
-
-		public static string GetSummonerURL(string region, params string[] names)
-		{
-			IEnumerable<string> safeNames = names.Select(x => FixName(x));
-			string inputNames = string.Join(",", safeNames);
-			return string.Format("https://{0}.api.pvp.net/api/lol/{0}/v1.4/summoner/by-name/{1}?api_key={2}", region, inputNames, Global.API_KEY);
 		}
 	}
 }
