@@ -14,7 +14,7 @@ namespace DodgeOrNot.Models
 {
 	public class Summoner : JSONObject
 	{
-		[Key, Column(Order = 1)]
+		[Key, Column(Order = 0)]
 		public string Region { get; set; }
 
 		[Key, Column(Order = 1)]
@@ -22,32 +22,31 @@ namespace DodgeOrNot.Models
 
 		public static Summoner[] FromRegionAndNames(string region, params string[] names)
 		{
-			//DodgeOrNotContext db = new DodgeOrNotContext();
-			//Summoner summ = db.Summoners.Find(name);
-			//if (summ != null)
-			//{
-			//	return summ;
-			//}
-			
-			IEnumerable<string> safeNames = names.Select(x => FixName(x));
+            //DodgeOrNotContext db = new DodgeOrNotContext();
+            //Summoner summ = db.Summoners.Find(name);
+            //if (summ != null)
+            //{
+            //	return summ;
+            //}
+
+            WebClient wc = new WebClient();
+            IEnumerable<string> safeNames = names.Select(x => FixName(x));
 			string inputNames = string.Join(",", safeNames);
 			string summURL = GetSummonerURL(region, names);
-			WebClient wc = new WebClient();
 			string json = wc.DownloadString(summURL);
 			JObject jsObj = JObject.Parse(json);
 
 			List<Summoner> summs = new List<Summoner>();
 			foreach (var jp in jsObj) {
 				summs.Add(new Summoner() {
-					Region = region,
+					Region = region.ToLowerInvariant(),
 					SummonerName = FixName(jp.Key),
 					RawJSON = jp.Value.ToString()
 				});
 			}
 			return summs.ToArray();
 		}
-
-		// TODO: implement FixName method
+        
 		public static string FixName(string name)
 		{
 			return Regex.Replace(name, @"[^\w]", "").ToLowerInvariant();
