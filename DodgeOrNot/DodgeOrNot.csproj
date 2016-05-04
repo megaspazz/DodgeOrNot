@@ -123,9 +123,9 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201605041230202_InitialSetup.cs" />
-    <Compile Include="Migrations\201605041230202_InitialSetup.Designer.cs">
-      <DependentUpon>201605041230202_InitialSetup.cs</DependentUpon>
+    <Compile Include="Migrations\201605041510470_InitialSetup.cs" />
+    <Compile Include="Migrations\201605041510470_InitialSetup.Designer.cs">
+      <DependentUpon>201605041510470_InitialSetup.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\DodgeOrNotContext.cs" />
@@ -186,8 +186,8 @@
     <None Include="Project_Readme.html" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\201605041230202_InitialSetup.resx">
-      <DependentUpon>201605041230202_InitialSetup.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201605041510470_InitialSetup.resx">
+      <DependentUpon>201605041510470_InitialSetup.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

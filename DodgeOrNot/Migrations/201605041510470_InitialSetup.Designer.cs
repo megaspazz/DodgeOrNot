@@ -13,7 +13,7 @@ namespace DodgeOrNot.Migrations
         
         string IMigrationMetadata.Id
         {
-            get { return "201605041230202_InitialSetup"; }
+            get { return "201605041510470_InitialSetup"; }
         }
         
         string IMigrationMetadata.Source

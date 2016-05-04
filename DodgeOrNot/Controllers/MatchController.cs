@@ -19,7 +19,7 @@ namespace DodgeOrNot.Controllers
         }
 
         // GET: Match/Test
-		public string Test(string region, long summonerID, string matchType, int beginIndex, int? endIndex)
+		public string Test()
         {
             return "this is THE match C0ntr0ll3r!!11!! ";
         }

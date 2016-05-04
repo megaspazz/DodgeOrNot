@@ -31,12 +31,6 @@ namespace DodgeOrNot.Models
         public static Match GetMatch(string region, long matchID)
         {
             DodgeOrNotContext db = new DodgeOrNotContext();
-			var x = db.Matches.ToArray();
-			//foreach (var t in x)
-			//{
-			//	db.Matches.Remove(t);
-			//}
-			//db.SaveChanges();
             Match m = db.Matches.Find(region, matchID);
             if (m == null)
             {
