@@ -12,13 +12,7 @@ namespace DodgeOrNot.Models
         public static Random RNG = new Random();
 
         public static readonly APIKey[] API_KEYS = {
-            new APIKey("186f8fec-2a95-407b-ac01-13d1e060796b", 10, 10),    // BE GOOD TO ME (NA)
-            new APIKey("206eb44e-a927-4132-8586-42b50842f9c0", 10, 10),    // Lt is L (NA)
-            new APIKey("42366f1f-f941-4121-b586-b635e695a42e", 10, 10),    // iLoveSchoolgirls (NA)
-            new APIKey("5897411f-2bfb-4f22-a36b-e85f9e0f5003", 10, 10),    // Katherine Zhao (NA)
-            new APIKey("43c95ae1-918b-41b7-8c7e-8be545bc7ac9", 10, 10),    // Celestial Beauty (EUW)
-            new APIKey("e7335df9-be3b-4179-a9ed-00ebc1871a68", 10, 10),    // LOCA PEOPLE (LAN)
-            new APIKey("4ff85aed-001e-43a8-9dbe-42c3cb1f1598", 10, 10),    // DonaId J Trump (LAN)
+            // Put your API keys here.  This app will crash if there are no keys!
         };
 
         private static readonly object _API_LOCK = new object();

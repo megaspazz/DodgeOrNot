@@ -18,7 +18,7 @@
 			<option value="oce">OCE</option>
 		</select>
 	</div>
-	Recent Games: <input id="numGames" type="number" min="1" value="20" />
+	Recent Games: <input id="numGames" type="number" min="1" max="40" value="20" />
 </div>
 <div>
 	<h2>Players</h2>
@@ -84,6 +84,12 @@
 			}
 			playerBoxes[idx++].value = p;
 		}
+	});
+
+	$("#numGames").change(function () {
+	    if (numGames.value != "-" && $.isNumeric(numGames.value)) {
+
+	    }
 	});
 
 	$("#btnSubmit").click(function ()
