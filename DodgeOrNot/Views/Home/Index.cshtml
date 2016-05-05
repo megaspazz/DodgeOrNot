@@ -103,7 +103,7 @@
 			return txt;
 		}).join();
 
-		var url = "/Summoner/GetInfo/";
+		var url = "@Url.Action("GetInfo", "Summoner")";
 		var args = {
 			region: "na",
 			summonerNames: names
@@ -126,7 +126,7 @@
 
 	function loadMatchData(summResults)
 	{
-		var url = "/Match/GetResults";
+	    var url = "@Url.Action("GetResults", "Match")";
 		var reg = $("#selRegion").val();
 		var games = $("#numGames").val();
 
@@ -154,7 +154,7 @@
 				var tdWin = document.createElement("td");
 
 				var res = computeResults(data);
-                
+
 				tdName.innerHTML = summResults[index].name;
 
 				tdKDA.appendChild(createIcon(res.kda, 1.5, 4.0));
@@ -241,14 +241,14 @@
 
 	function createIcon(val, lo, hi)
 	{
-	    var src = "/Images/neutral.png";
+	    var src = "@Url.Content("~/Images/neutral.png")";
 	    if (val <= lo)
 	    {
-	        src = "/Images/bad.png";
+	        src = "@Url.Content("~/Images/bad.png")";
 	    }
 	    if (val >= hi)
 	    {
-	        src = "/Images/good.png";
+	        src = "@Url.Content("~/Images/good.png")";
 	    }
 	    var img = document.createElement("img");
 	    img.setAttribute("src", src);
