@@ -102,10 +102,11 @@
 		{
 			return txt;
 		}).join();
+		var reg = $("#selRegion").val();
 
 		var url = "@Url.Action("GetInfo", "Summoner")";
 		var args = {
-			region: "na",
+		    region: reg,
 			summonerNames: names
 		};
 
@@ -126,13 +127,13 @@
 
 	function loadMatchData(summResults)
 	{
-	    var url = "@Url.Action("GetResults", "Match")";
 		var reg = $("#selRegion").val();
 		var games = $("#numGames").val();
 
         // Remove all rows in the results table except the first header row
 		$("#tblResults").find("tr:gt(0)").remove();
-
+        
+		var url = "@Url.Action("GetResults", "Match")";
 		for (var i = 0; i < summResults.length; i++)
 		{
 			var args = {
