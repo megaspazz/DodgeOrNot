@@ -12,7 +12,8 @@ namespace DodgeOrNot.Models
         public static Random RNG = new Random();
 
         public static readonly APIKey[] API_KEYS = {
-            // Put your API keys here.  This app will crash if there are no keys!
+            // Put your API keys here.
+            // The app will crash if there are no keys!
         };
 
         private static readonly object _API_LOCK = new object();

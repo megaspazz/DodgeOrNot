@@ -37,7 +37,7 @@
             <col width="160" />
             <col width="240" />
             <col width="160" />
-            <col width="160" />
+            <col width="200" />
         </colgroup>
         <tr>
             <th>Summoner</th>
@@ -63,10 +63,16 @@
 		for (var i = 0; i < lines.length; i++)
 		{
 			var idxColon = lines[i].indexOf(": ");
-			var idxJoin = lines[i].indexOf(" has joined the room");
+			var idxJoin = lines[i].indexOf(" joined the room");
 			if (idxColon >= 0)
 			{
-				var p = lines[i].substring(0, idxColon);
+			    var raw = lines[i].substring(0, idxColon);
+			    var lastChar = raw.slice(-1);
+			    var p = raw.trim();
+                if (lastChar != " ") {
+                    var lastSpace = p.lastIndexOf(" ");
+                    p = p.substring(0, lastSpace);
+			    }
 				players[p] = true;
 			} else if (idxJoin >= 0)
 			{
@@ -168,7 +174,7 @@
 
 				tdWin.appendChild(createIcon(res.winRate, 0.30, 0.70));
 				tdWin.appendChild(createIcon(res.winRate, 0.40, 0.60));
-				tdWin.appendChild(createSpan((100 * res.winRate).toFixed(2) + "%"));
+				tdWin.appendChild(createSpan((100 * res.winRate).toFixed(2) + "% (" + res.total.wins + "W-" + res.total.losses + "L)"));
 
 				tr.appendChild(tdName);
 				tr.appendChild(tdKDA);
@@ -223,13 +229,14 @@
 	        totalVictories += res.Victory;
 	    }
 	    return {
-            kda: (totalKills + totalAssists) / totalDeaths,
+	        kda: (totalKills + totalAssists) / totalDeaths,
 	        winRate: totalVictories / games,
 	        total: {
 	            kills: totalKills,
 	            deaths: totalDeaths,
 	            assists: totalAssists,
 	            wins: totalVictories,
+                losses: games - totalVictories
 	        },
 	        average: {
 	            kills: totalKills / games,
