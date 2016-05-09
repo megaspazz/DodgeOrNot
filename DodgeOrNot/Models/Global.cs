@@ -16,7 +16,7 @@ namespace DodgeOrNot.Models
             // The app will crash if there are no keys!
         };
 
-        private static readonly object _API_LOCK = new object();
+        private static readonly object _apiLock = new object();
         private static SortedSet<APIKeyUse> _API_KEY_PQ;
         static Global()
         {
@@ -45,7 +45,7 @@ namespace DodgeOrNot.Models
         {
             get
             {
-                lock (_API_LOCK)
+                lock (_apiLock)
                 {
                     return _API_KEY_PQ.First();
                 }
@@ -113,7 +113,7 @@ namespace DodgeOrNot.Models
 
         private static void CycleCurrentKey(APIKeyUse curr, double seconds)
         {
-            lock (_API_LOCK)
+            lock (_apiLock)
             {
                 _API_KEY_PQ.Remove(curr);
                 curr.NextUse = DateTime.UtcNow.AddSeconds(seconds);

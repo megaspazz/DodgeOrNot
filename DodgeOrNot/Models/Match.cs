@@ -28,9 +28,11 @@ namespace DodgeOrNot.Models
             return string.Format("https://{0}.api.pvp.net/api/lol/{0}/v2.2/match/{1}?includeTimeline={2}&api_key=", region, matchID, includeTimeline);
         }
 
+        private static readonly object _dbLock = new object();
         public static Match GetMatch(string region, long matchID)
         {
             DodgeOrNotContext db = new DodgeOrNotContext();
+            string regionKey = region.ToLowerInvariant();
             Match m = db.Matches.Find(region, matchID);
             if (m == null)
             {
@@ -40,12 +42,19 @@ namespace DodgeOrNot.Models
                 {
                     m = new Match()
                     {
-                        Region = region.ToLowerInvariant(),
+                        Region = regionKey,
                         MatchID = matchID,
                         RawJSON = json
                     };
-                    db.Matches.Add(m);
-                    db.SaveChanges();
+                    lock(_dbLock)
+                    {
+                        Match dbMatch = db.Matches.Find(regionKey, matchID);
+                        if (dbMatch == null)
+                        {
+                            db.Matches.Add(m);
+                            db.SaveChanges();
+                        }
+                    }
                 }
             }
             return m;
@@ -57,13 +66,16 @@ namespace DodgeOrNot.Models
             string json = Global.CallAPI(matchRefFragURL);
             JObject jsObj = JObject.Parse(json);
             List<Match> matches = new List<Match>();
-            foreach (var matchObj in jsObj["matches"])
+            if (jsObj["matches"] != null)
             {
-                long matchID = matchObj["matchId"].ToObject<long>();
-                Match m = GetMatch(region, matchID);
-                if (m != null)
+                foreach (var matchObj in jsObj["matches"])
                 {
-                    matches.Add(m);
+                    long matchID = matchObj["matchId"].ToObject<long>();
+                    Match m = GetMatch(region, matchID);
+                    if (m != null)
+                    {
+                        matches.Add(m);
+                    }
                 }
             }
             return matches.ToArray();
@@ -121,7 +133,14 @@ namespace DodgeOrNot.Models
                     mr.Victory = statsObj["winner"].ToObject<bool>();
                 }
             }
-			mr.Participation = (double)(mr.Kills + mr.Assists) / teamKills[teamID];
+            if (mr.Kills == 0 && mr.Assists == 0 && teamKills[teamID] == 0)
+            {
+                mr.Participation = 0.2;
+            }
+            else
+            {
+                mr.Participation = (double)(mr.Kills + mr.Assists) / teamKills[teamID];
+            }
 			return mr;
         }
 

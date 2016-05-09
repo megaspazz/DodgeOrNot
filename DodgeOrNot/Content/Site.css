@@ -30,3 +30,20 @@ textarea {
     width: 32px;
     height: 32px;
 }
+
+/*
+TABLE CSS DOESNT WORK RIGHT NOW! 
+
+table { 
+    border: 2px solid black;
+}
+
+#tblResults td, #tblResults th {
+    padding: 4px;
+    border: 1px solid black;
+}
+
+#tblResults th {
+    border-bottom: 2px solid black;
+}
+*/

@@ -18,17 +18,17 @@
 			<option value="oce">OCE</option>
 		</select>
 	</div>
-	Recent Games: <input id="numGames" type="number" min="1" max="40" value="20" />
+	Recent Games: <input id="numGames" type="number" min="1" max="40" value="20" onkeypress="submitKeyPress(event);" />
 </div>
 <div>
 	<h2>Players</h2>
-	Player 1: <input id="txtP1" /><br />
-	Player 2: <input id="txtP2" /><br />
-	Player 3: <input id="txtP3" /><br />
-	Player 4: <input id="txtP4" /><br />
-	Player 5: <input id="txtP5" /><br />
-	<button id="btnSubmit" type="button">Submit</button>
-	<button id="btnClear" type="button">Clear</button>
+	Player 1: <input id="txtP1" onkeypress="submitKeyPress(event);" /><br />
+	Player 2: <input id="txtP2" onkeypress="submitKeyPress(event);" /><br />
+	Player 3: <input id="txtP3" onkeypress="submitKeyPress(event);" /><br />
+	Player 4: <input id="txtP4" onkeypress="submitKeyPress(event);" /><br />
+	Player 5: <input id="txtP5" onkeypress="submitKeyPress(event);" /><br />
+	<button id="btnSubmit" type="button" onclick="submitSummoners();">Submit</button>
+	<button id="btnClear" type="button" onclick="clearSummoners();">Clear</button>
 </div>
 <div>
     <h2>Results</h2>
@@ -49,6 +49,8 @@
 </div>
 
 <script>
+    var waitResponses = 0;
+
 	$("#btnParseChat").click(function ()
 	{
 		var playerBoxes = getPlayerBoxes();
@@ -92,52 +94,77 @@
 		}
 	});
 
-	$("#numGames").change(function () {
-	    if (numGames.value != "-" && $.isNumeric(numGames.value)) {
-
-	    }
-	});
-
-	$("#btnSubmit").click(function ()
+	function submitKeyPress(e)
 	{
-		var playerBoxes = getPlayerBoxes();
-		var names = playerBoxes.map(function (txtBox)
-		{
-			return txtBox.value;
-		}).filter(function (txt)
-		{
-			return txt;
-		}).join();
-		var reg = $("#selRegion").val();
+	    var code = e.keyCode || e.which;
+	    if (code == 13)
+	    {
+	        submitSummoners();
+	    }
+	}
 
-		var url = "@Url.Action("GetInfo", "Summoner")";
-		var args = {
-		    region: reg,
-			summonerNames: names
-		};
+    function submitSummoners()
+    {
+        if (waitResponses > 0)
+        {
+            // TODO: better way to show error messages
+            alert("ERROR:  Currently processing previous submission.  Please be patient, especially if you chose to load a lot of games.  If it's already been a really long time, refresh the page and try again.");
+            return;
+        }
 
-		$.getJSON(url, args, function (data)
-		{
-			var summResults = [];
-			for (var i = 0; i < data.length; i++)
-			{
-				var jsObj = JSON.parse(data[i].RawJSON);
-				summResults[i] = {
-					id: jsObj.id,
-					name: jsObj.name
-				};
-			}
-			loadMatchData(summResults);
-		});
-	});
+        var playerBoxes = getPlayerBoxes();
+        var names = playerBoxes.map(function (txtBox)
+        {
+            return txtBox.value;
+        }).filter(function (txt)
+        {
+            return txt;
+        }).join();
+        var reg = $("#selRegion").val();
+
+        var url = "@Url.Action("GetInfo", "Summoner")";
+        var args = {
+            region: reg,
+            summonerNames: names
+        };
+
+        waitResponses = names.length;
+        $.getJSON(url, args, function (data)
+        {
+            // Remove all rows in the results table except the first header row
+            $("#tblResults").find("tr:gt(0)").remove();
+
+            var tblResults = document.getElementById("tblResults");
+            var summResults = [];
+            for (var i = 0; i < data.length; i++)
+            {
+                var jsObj = JSON.parse(data[i].RawJSON);
+                var tr = document.createElement("tr");
+                var tdName = document.createElement("td");
+                var summName = jsObj.name;
+                var aName = document.createElement("a");
+                aName.setAttribute("href", "http://na.op.gg/summoner/userName=" + encodeURIComponent(summName));
+                aName.innerHTML = summName;
+                tdName.appendChild(aName);
+                tr.appendChild(tdName);
+                tr.style.height = "48px";    // TODO: set height with CSS when you figure out why table CSS isn't working
+                tblResults.appendChild(tr);
+                summResults[i] = {
+                    id: jsObj.id,
+                    name: jsObj.name,
+                    node: tr
+                };
+            }
+            loadMatchData(summResults);
+        });
+    }
 
 	function loadMatchData(summResults)
 	{
+	    waitResponses = summResults.length;
+
 		var reg = $("#selRegion").val();
 		var games = $("#numGames").val();
-
-        // Remove all rows in the results table except the first header row
-		$("#tblResults").find("tr:gt(0)").remove();
         
 		var url = "@Url.Action("GetResults", "Match")";
 		for (var i = 0; i < summResults.length; i++)
@@ -153,16 +180,11 @@
             // Need to create a closure to preserve the value of the iterator in the callback
 			$.getJSON(url, args, createLoopCallback(i, function (data, index)
 			{
-			    var tblResults = document.getElementById("tblResults");
-			    var tr = document.createElement("tr");
-				var tdName = document.createElement("td");
 				var tdKDA = document.createElement("td");
 				var tdPart = document.createElement("td");
 				var tdWin = document.createElement("td");
 
 				var res = computeResults(data);
-
-				tdName.innerHTML = summResults[index].name;
 
 				tdKDA.appendChild(createIcon(res.kda, 1.5, 4.0));
 				tdKDA.appendChild(createIcon(res.kda, 2.0, 3.0));
@@ -176,11 +198,11 @@
 				tdWin.appendChild(createIcon(res.winRate, 0.40, 0.60));
 				tdWin.appendChild(createSpan((100 * res.winRate).toFixed(2) + "% (" + res.total.wins + "W-" + res.total.losses + "L)"));
 
-				tr.appendChild(tdName);
-				tr.appendChild(tdKDA);
-				tr.appendChild(tdPart);
-				tr.appendChild(tdWin);
-				tblResults.appendChild(tr);
+				summResults[index].node.appendChild(tdKDA);
+				summResults[index].node.appendChild(tdPart);
+				summResults[index].node.appendChild(tdWin);
+
+				waitResponses--;
 			}));
 		}
 	}
@@ -193,14 +215,14 @@
 	    }
 	}
 
-	$("#btnClear").click(function ()
+	function clearSummoners()
 	{
 		var playerBoxes = getPlayerBoxes();
 		for (var i = 0; i < playerBoxes.length; i++)
 		{
 			playerBoxes[i].value = "";
 		}
-	});
+	}
 
 	function getPlayerBoxes()
 	{
@@ -262,7 +284,7 @@
 	    img.setAttribute("src", src);
 	    //img.setAttribute("width", 32);
 	    //img.setAttribute("height", 32);
-	    img.setAttribute("class", "icon-pic");
+	    img.className = "icon-pic";
 	    return img;
 	}
 
